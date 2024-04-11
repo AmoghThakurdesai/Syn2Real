@@ -41,7 +41,7 @@ print('val_batch_size: {}\nlambda_loss: {}\ncategory: {}'
 
 # --- Set category-specific hyper-parameters  --- #
 if category == 'derain':
-    val_data_dir = './data/test/derain/'
+    val_data_dir = '/content/rainy/rainy/'#'./data/test/derain/'
 elif category == 'dehaze':
     val_data_dir = './data/test/dehaze/'
 else:
@@ -54,8 +54,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 # --- Validation data loader --- #
-val_filename = 'real_input_split1.txt'
-val_data_loader = DataLoader(ValData(val_data_dir,val_filename), batch_size=val_batch_size, shuffle=False, num_workers=24)
+val_filename = 'rainy.txt'
+val_data_loader = DataLoader(ValData(val_data_dir,val_filename), batch_size=val_batch_size, shuffle=False, num_workers=2)
 
 
 # --- Define the network --- #
