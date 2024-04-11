@@ -54,7 +54,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 # --- Validation data loader --- #
-val_filename = 'val_list_SIRR.txt'
+val_filename = 'real_input_split1.txt'
 val_data_loader = DataLoader(ValData(val_data_dir,val_filename), batch_size=val_batch_size, shuffle=False, num_workers=24)
 
 
@@ -74,8 +74,8 @@ net.load_state_dict(torch.load('./{}/{}_best'.format(exp_name,category)))
 # --- Use the evaluation model in testing --- #
 net.eval()
 if os.path.exists('./{}_results/{}/'.format(category,exp_name))==False: 	
-	os.mkdir('./{}_results/{}/'.format(category,exp_name))	
-	os.mkdir('./{}_results/{}/rain/'.format(category,exp_name))
+	os.makedirs(f"./{category}_results/{exp_name}/")	
+	os.makedirs('./{}_results/{}/rain/'.format(category,exp_name))
 print('--- Testing starts! ---')
 start_time = time.time()
 val_psnr, val_ssim = validation(net, val_data_loader, device, category, exp_name, save_tag=True)
