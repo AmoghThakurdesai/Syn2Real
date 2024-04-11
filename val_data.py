@@ -1,54 +1,84 @@
 
 # --- Imports --- #
-import torch.utils.data as data
-from PIL import Image
-from torchvision.transforms import Compose, ToTensor, Normalize
+import time
+import torch
+import argparse
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from val_data import ValData
+from model import DeRain_v2
+from utils import validation
+import os
 import numpy as np
+import random
 
-# --- Validation/test dataset --- #
-class ValData(data.Dataset):
-    def __init__(self, val_data_dir,val_filename):
-        super().__init__()
-        val_list = val_data_dir + val_filename
-        with open(val_list) as f:
-            contents = f.readlines()
-            input_names = [i.strip() for i in contents]
-            gt_names = [i.strip().replace('rain','norain') for i in input_names]
+# --- Parse hyper-parameters  --- #
+parser = argparse.ArgumentParser(description='Hyper-parameters for GridDehazeNet')
+parser.add_argument('-lambda_loss', help='Set the lambda in loss function', default=0.04, type=float)
+parser.add_argument('-val_batch_size', help='Set the validation/test batch size', default=1, type=int)
+parser.add_argument('-exp_name', help='directory for saving the networks of the experiment', type=str)
+parser.add_argument('-category', help='Set image category (derain or dehaze?)', default='derain', type=str)
+parser.add_argument('-seed', help='set random seed', default=19, type=int)
+args = parser.parse_args()
 
-        self.input_names = input_names
-        self.gt_names = gt_names
-        self.val_data_dir = val_data_dir
+lambda_loss = args.lambda_loss
+val_batch_size = args.val_batch_size
+category = args.category
+exp_name = args.exp_name
 
-    def get_images(self, index):
-        input_name = self.input_names[index]
-        gt_name = self.gt_names[index]
-        input_img = Image.open(self.val_data_dir + input_name)
-        gt_img = Image.open(self.val_data_dir + gt_name)
+#set seed
+seed = args.seed
+if seed is not None:
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    random.seed(seed) 
+    print('Seed:\t{}'.format(seed))
 
-        # Resizing image in the multiple of 16"
-        wd_new,ht_new = input_img.size
-        if ht_new>wd_new and ht_new>1024:
-            wd_new = int(np.ceil(wd_new*1024/ht_new))
-            ht_new = 1024
-        elif ht_new<=wd_new and wd_new>1024:
-            ht_new = int(np.ceil(ht_new*1024/wd_new))
-            wd_new = 1024
-        wd_new = int(16*np.ceil(wd_new/16.0))
-        ht_new = int(16*np.ceil(ht_new/16.0))
-        input_img = input_img.resize((wd_new,ht_new), Image.ANTIALIAS)
-        gt_img = gt_img.resize((wd_new, ht_new), Image.ANTIALIAS)
+print('--- Hyper-parameters for testing ---')
+print('val_batch_size: {}\nlambda_loss: {}\ncategory: {}'
+      .format(val_batch_size,lambda_loss, category))
 
-        # --- Transform to tensor --- #
-        transform_input = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-        transform_gt = Compose([ToTensor()])
-        input_im = transform_input(input_img)
-        gt = transform_gt(gt_img)
+# --- Set category-specific hyper-parameters  --- #
+if category == 'derain':
+    val_data_dir = '/content/rainy/rainy/'#'./data/test/derain/'
+elif category == 'dehaze':
+    val_data_dir = './data/test/dehaze/'
+else:
+    raise Exception('Wrong image category. Set it to derain or dehaze dateset.')
 
-        return input_im, gt, input_name
 
-    def __getitem__(self, index):
-        res = self.get_images(index)
-        return res
+# --- Gpu device --- #
+device_ids = [Id for Id in range(torch.cuda.device_count())]
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    def __len__(self):
-        return len(self.input_names)
+
+# --- Validation data loader --- #
+val_filename = 'rainy.txt'
+val_data_loader = DataLoader(ValData(val_data_dir,val_filename), batch_size=val_batch_size, shuffle=False, num_workers=2)
+
+
+# --- Define the network --- #
+net = DeRain_v2()
+
+
+# --- Multi-GPU --- #
+net = net.to(device)
+net = nn.DataParallel(net, device_ids=device_ids)
+
+
+# --- Load the network weight --- #
+net.load_state_dict(torch.load('./{}/{}_best'.format(exp_name,category)))
+
+
+# --- Use the evaluation model in testing --- #
+net.eval()
+if os.path.exists('./{}_results/{}/'.format(category,exp_name))==False: 	
+	os.makedirs(f"./{category}_results/{exp_name}/")	
+	os.makedirs('./{}_results/{}/rain/'.format(category,exp_name))
+print('--- Testing starts! ---')
+start_time = time.time()
+val_psnr, val_ssim = validation(net, val_data_loader, device, category, exp_name, save_tag=True)
+end_time = time.time() - start_time
+print('val_psnr: {0:.2f}, val_ssim: {1:.4f}'.format(val_psnr, val_ssim))
+print('validation time is {0:.4f}'.format(end_time))
