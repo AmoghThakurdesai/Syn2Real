@@ -75,7 +75,7 @@ def save_image(pred_image, image_name, category, exp_name):
     
     for ind in range(batch_num):
         image_name_1 = image_name[ind].split('/')[-1]
-        utils.save_image(pred_image_images[ind], './{}_results/{}/{}'.format(category, exp_name, image_name_1[:-3] + 'png'))
+        utils.save_image(pred_image_images[ind], './{}_results/{}/rain/{}'.format(category, exp_name, image_name_1[:-3] + 'png'))
 
 
 def print_log(epoch, num_epochs, one_epoch_time, train_psnr, val_psnr, val_ssim, category, exp_name):
