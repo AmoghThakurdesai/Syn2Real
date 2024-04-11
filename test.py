@@ -6,7 +6,7 @@ import argparse
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from val_data import ValData
-from model import  DeRain_v1, DeRain_v2
+from model import DeRain_v2
 from utils import validation
 import os
 import numpy as np
