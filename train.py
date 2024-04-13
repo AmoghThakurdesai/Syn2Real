@@ -68,10 +68,12 @@ print('learning_rate: {}\ncrop_size: {}\ntrain_batch_size: {}\nval_batch_size: {
 if category == 'derain':
     num_epochs = 200
     train_data_dir = './data/train/derain/'
-    val_data_dir = './data/test/derain/'
+    u_train_data_dir = '/content/rainy/rainy/rainy/'
+    val_data_dir = '/content/kaggledataset/Kaggle_Dataset/'
 elif category == 'dehaze':
     num_epochs = 10
     train_data_dir = './data/train/dehaze/'
+    u_train_data_dir = './data/train/dehaze/'
     val_data_dir = './data/test/dehaze/'
 else:
     raise Exception('Wrong image category. Set it to derain or dehaze dateset.')
@@ -121,11 +123,11 @@ print("Total_params: {}".format(pytorch_total_params))
 
 
 # --- Load training data and validation/test data --- #
-labeled_name = 'DIDMDN.txt'
-unlabeled_name = 'JORDER_200L.txt'
-val_filename = 'JORDER_200L.txt'
+labeled_name = 'real_input_split1.txt'
+unlabeled_name = 'rainy.txt'
+val_filename = 'Rainy(input).txt'
 # --- Load training data and validation/test data --- #
-unlbl_train_data_loader = DataLoader(TrainData(crop_size, train_data_dir,unlabeled_name), batch_size=train_batch_size, shuffle=True, num_workers=8)
+unlbl_train_data_loader = DataLoader(TrainData(crop_size, u_train_data_dir,unlabeled_name), batch_size=train_batch_size, shuffle=True, num_workers=8)
 lbl_train_data_loader = DataLoader(TrainData(crop_size, train_data_dir,labeled_name), batch_size=train_batch_size, shuffle=True, num_workers=8)
 val_data_loader = DataLoader(ValData(val_data_dir,val_filename), batch_size=val_batch_size, shuffle=False, num_workers=8)
 
