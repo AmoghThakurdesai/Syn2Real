@@ -66,9 +66,9 @@ print('learning_rate: {}\ncrop_size: {}\ntrain_batch_size: {}\nval_batch_size: {
 
 # --- Set category-specific hyper-parameters  --- #
 if category == 'derain':
-    num_epochs = 200
+    num_epochs = 30
     train_data_dir = './data/train/derain/'
-    u_train_data_dir = '/content/rainy/rainy/rainy/'
+    u_train_data_dir = '/content/rainy/rainy/'
     val_data_dir = '/content/kaggledataset/Kaggle_Dataset/'
 elif category == 'dehaze':
     num_epochs = 10
