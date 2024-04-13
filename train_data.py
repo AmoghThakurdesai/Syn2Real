@@ -15,7 +15,10 @@ class TrainData(data.Dataset):
         with open(train_list) as f:
             contents = f.readlines()
             input_names = [i.strip() for i in contents]
-            gt_names = [i.strip().replace('rain','norain') for i in input_names]
+            if train_data_dir == "/content/rainy/rainy/":
+              gt_names = [i.strip().replace('rainy','d rainy') for i in input_names]
+            else:
+              gt_names = [i.strip().replace('rain','norain') for i in input_names]
 
         self.input_names = input_names
         self.gt_names = gt_names
