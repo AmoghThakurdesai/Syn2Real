@@ -11,7 +11,7 @@ class ValData(data.Dataset):
         with open(val_list) as f:
             contents = f.readlines()
             input_names = [i.strip() for i in contents]
-            gt_names = [i.strip().replace('rain','norain') for i in input_names]
+            gt_names = [i.strip().replace('Rainy(input)','Clear') for i in input_names]
 
         self.input_names = input_names
         self.gt_names = gt_names
